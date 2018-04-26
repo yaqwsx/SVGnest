@@ -6,7 +6,7 @@ This tool chail contains:
   including support for line ang fill engraving.
 - a fork of SVGNest with customizations for Trotec laser and several bug fixes.
 
-[Use the toolchain!](nesting.robotikabrno.cz)
+[Use the toolchain!](http://nesting.robotikabrno.cz)
 
 ## Usage
 
