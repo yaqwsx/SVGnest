@@ -248,16 +248,9 @@
 					message.className = 'error animated bounce';
 					return
 				}
-				
-				var svg;
-				svg = display.querySelector('svg');
-				
-				if(!svg){
-					svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
-				}
-				
-				svg = svg.cloneNode(false);
-				
+
+				var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+
 				// maintain stroke, fill etc of input
 				if(SvgNest.style){
 					svg.appendChild(SvgNest.style);
@@ -269,6 +262,7 @@
 					var b = bins.children[i];
 					var group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
 					group.setAttribute('transform', 'translate(0 '+binHeight*1.1*i+')');
+					group.id = "Stock" + i;
 					for(var j=0; j<b.children.length; j++){
 						group.appendChild(b.children[j].cloneNode(true));
 					}
