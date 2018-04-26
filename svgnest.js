@@ -749,6 +749,18 @@
 		
 		// returns an array of SVG elements that represent the placement, for export or rendering
 		this.applyPlacement = function(placement){
+			function findComponent(id, element) {
+				if (element.id == id) {
+					return element;
+				}
+				for (var i = 0; i != element.children.length; i++) {
+					var r = findComponent(id, element.children[i])
+					if ( r ) {
+						return r;
+					}
+				}
+				return null;
+			}
 			var i, j, k;
 			var clone = [];
 			for(i=0; i<parts.length; i++){
@@ -788,6 +800,15 @@
 							}
 							partgroup.appendChild(c);
 						}
+						// Append elements not used for nesting
+						var pElem = findComponent(clone[flattened[0].source].id, this.originalSvg).parentElement;
+						for (var k = 0; k < pElem.children.length; k++) {
+							var isMissing = findComponent(pElem.children[k].id, partgroup) == null;
+							if (isMissing) {
+								partgroup.appendChild(pElem.children[k].cloneNode(true));
+							}
+						}
+						partgroup.id = pElem.id;
 					}
 					
 					newsvg.appendChild(partgroup);
