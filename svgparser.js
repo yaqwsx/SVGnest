@@ -18,10 +18,11 @@
 				
 		this.conf = {
 			tolerance: 2, // max bound for bezier->line segment conversion, in native SVG units
-			toleranceSvg: 0.005 // fudge factor for browser inaccuracy in SVG unit handling
-		}; 
+			toleranceSvg: 0.005, // fudge factor for browser inaccuracy in SVG unit handling
+			outlineColor: new tinycolor("#ff0000") // Default outline color
+		};
 	}
-	
+
 	SvgParser.prototype.config = function(config){
 		this.conf.tolerance = config.tolerance;
 	}
@@ -55,6 +56,8 @@
 		// remove any non-contour elements like text
 		this.filter(this.allowedElements);
 		
+		this.filterOutline(this.svgRoot);
+
 		// split any compound paths into individual path elements
 		this.recurse(this.svgRoot, this.splitPath);
 		
@@ -398,7 +401,34 @@
 		}
 		return false;
 	}
-	
+
+	SvgParser.prototype.filterOutline = function(element) {
+		alert(element.getAttribute("id"))
+		var color = this.conf.outlineColor;
+		element = element || this.svgRoot;
+		for(var i=0; i<element.children.length;i++){
+			if(this.filterOutline(element.children[i])) {
+				i--;
+			}
+		}
+
+		var fillValue = element.getAttribute("fill");
+		var hasFill = fillValue ? fillValue != "none" : false;
+
+		var strokeValue = element.getAttribute("stroke");
+		var isOutline = strokeValue ?
+			tinycolor.equals(tinycolor(strokeValue), this.conf.outlineColor): false;
+		var col = tinycolor(strokeValue);
+		var rgb = col.toRgb();
+		var rgb2 = this.conf.outlineColor.toRgb();
+
+		if(element.children.length == 0 && (hasFill || !isOutline)) {
+			element.parentElement.removeChild(element);
+			return true;
+		}
+		return false;
+	}
+
 	// split a compound path (paths with M, m commands) into an array of paths
 	SvgParser.prototype.splitPath = function(path){
 		if(!path || path.tagName != 'path' || !path.parentElement){
