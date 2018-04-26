@@ -19,7 +19,8 @@
 		this.conf = {
 			tolerance: 2, // max bound for bezier->line segment conversion, in native SVG units
 			toleranceSvg: 0.005, // fudge factor for browser inaccuracy in SVG unit handling
-			outlineColor: new tinycolor("#ff0000") // Default outline color
+			outlineColor: new tinycolor("#ff0000"), // Default outline color
+			stockColor: new tinycolor("#000000") // Default stock color
 		};
 	}
 
@@ -423,11 +424,10 @@
 		var hasFill = fillValue ? fillValue != "none" : false;
 
 		var strokeValue = element.getAttribute("stroke");
-		var isOutline = strokeValue ?
-			tinycolor.equals(tinycolor(strokeValue), this.conf.outlineColor): false;
-		var col = tinycolor(strokeValue);
-		var rgb = col.toRgb();
-		var rgb2 = this.conf.outlineColor.toRgb();
+		var isOutline = strokeValue
+			?	tinycolor.equals(tinycolor(strokeValue), this.conf.outlineColor) ||
+				tinycolor.equals(tinycolor(strokeValue), this.conf.stockColor)
+			: false;
 
 		if(element.children.length == 0 && (hasFill || !isOutline)) {
 			element.parentElement.removeChild(element);
