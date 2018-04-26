@@ -13,6 +13,8 @@
 		
 		var svg = null;
 		
+		this.originalSvg;
+
 		// keep a reference to any style nodes, to maintain color/fill info
 		this.style = null;
 		
@@ -56,6 +58,8 @@
 			
 			this.style = SvgParser.getStyle();
 
+			SvgParser.applyTransform();
+			this.originalSvg = SvgParser.get();
 			svg = SvgParser.clean();
 			
 			tree = this.getParts(svg.children);
