@@ -342,22 +342,7 @@
 					if(reader.result){
 						try{
 							var svg = window.SvgNest.parsesvg(reader.result);
-							{
-								var wholeSVG = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-								// Copy relevant scaling info
-								wholeSVG.setAttribute('width',svg.getAttribute('width'));
-								wholeSVG.setAttribute('height',svg.getAttribute('height'));
-								wholeSVG.setAttribute('viewBox',svg.getAttribute('viewBox'));
-								var rect = document.createElementNS(wholeSVG.namespaceURI,'rect');
-								rect.setAttribute('x', wholeSVG.viewBox.baseVal.x);
-								rect.setAttribute('y', wholeSVG.viewBox.baseVal.x);
-								rect.setAttribute('width', wholeSVG.viewBox.baseVal.width);
-								rect.setAttribute('height', wholeSVG.viewBox.baseVal.height);
-								rect.setAttribute('class', 'fullRect');
-								wholeSVG.appendChild(rect);
-							}
 							display.innerHTML = '';
-							display.appendChild(wholeSVG); // As a default bin in background
 							display.appendChild(svg);
 						}
 						catch(e){
@@ -372,7 +357,6 @@
 						start.className = 'button start disabled';
 						
 						attachSvgListeners(svg);
-						attachSvgListeners(wholeSVG);
 					}
 				}
 				
