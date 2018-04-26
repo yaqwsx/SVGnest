@@ -383,16 +383,20 @@
 		if(!whitelist || whitelist.length == 0){
 			throw Error('invalid whitelist');
 		}
-		
+
 		element = element || this.svgRoot;
-		
+
 		for(var i=0; i<element.children.length; i++){
-			this.filter(whitelist, element.children[i]);
+			if(this.filter(whitelist, element.children[i])) {
+				i--;
+			}
 		}
-		
-		if(element.children.length == 0 && whitelist.indexOf(element.tagName) < 0){
+
+		if(element.children.length == 0 && whitelist.indexOf(element.tagName) < 0) {
 			element.parentElement.removeChild(element);
+			return true;
 		}
+		return false;
 	}
 	
 	// split a compound path (paths with M, m commands) into an array of paths
