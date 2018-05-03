@@ -347,15 +347,15 @@ function onClose() {
     outputState.indent--;
     echoln(indent() + "</svg>");
 
-    var width = outputState.maxX - outputState.minX + properties.spacing;
-    var height = outputState.maxY - outputState.minY + properties.spacing;
+    var width = outputState.maxX - outputState.minX + 2 * properties.spacing;
+    var height = outputState.maxY - outputState.minY + 2 * properties.spacing;
 
     // Echo header
     writeln("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>");
     writeln("<svg xmlns=\"http://www.w3.org/2000/svg\" "
         + "width=\"" + (width + properties.spacing) + "mm\" "
         + "height=\"" + (height + properties.spacing) + "mm\" "
-        + "viewBox=\"" + [-properties.spacing, -height,
+        + "viewBox=\"" + [-properties.spacing, outputState.minY - properties.spacing,
         width + properties.spacing, height + properties.spacing].join(" ") + "\""
         + ">");
 
