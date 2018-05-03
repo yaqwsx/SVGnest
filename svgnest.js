@@ -772,8 +772,8 @@
 			for(i=0; i<placement.length; i++){
 				var newsvg = svg.cloneNode(false);
 				newsvg.setAttribute('viewBox', '0 0 '+binBounds.width+' '+binBounds.height);
-				newsvg.setAttribute('width',binBounds.width + 'px');
-				newsvg.setAttribute('height',binBounds.height + 'px');
+				newsvg.setAttribute('width',binBounds.width + 'mm');
+				newsvg.setAttribute('height',binBounds.height + 'mm');
 				var binclone = bin.cloneNode(false);
 
 				binclone.setAttribute('class','bin');

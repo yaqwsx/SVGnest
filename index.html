@@ -243,6 +243,11 @@
 				}
 
 				var binHeight = parseInt(bins.children[0].getAttribute('height'));
+				var binWidth = parseInt(bins.children[0].getAttribute('width'));
+
+				svg.setAttribute('width', binWidth + 'mm');
+				svg.setAttribute('height', (bins.children.length * binHeight) + 'mm');
+				svg.setAttribute('viewBox', '0 0 '+ binWidth +' '+ (bins.children.length * binHeight));
 
 				for(var i=0; i<bins.children.length; i++){
 					var b = bins.children[i];
