@@ -67,6 +67,8 @@ outputState = {
     yOffset: 0,
     zeroXOffset: 0,
     zeroYOffset: 0,
+    wcsXOffset: 0,
+    wcsYOffset: 0,
     maxX: 0,
     maxY: 0,
     minX: 0,
@@ -74,7 +76,19 @@ outputState = {
     lastPos: getCurrentPosition(),
     indent: 0,
     text: "",
-    openedGroup: false
+    openedGroup: false,
+    stock: {
+        lower: { x: 0, y: 0 },
+        upper: { x: 0, y: 0 }
+    },
+    prevStock: {
+        lower: { x: 0, y: 0 },
+        upper: { x: 0, y: 0 }
+    },
+    openJob: null,
+    patternStart: null,
+    patternCounter: 0,
+    initialPosition: null
 };
 
 /** Returns the given spatial value in MM. */
@@ -87,14 +101,14 @@ function indent() {
 }
 
 function tX(x) {
-    var xx = x + outputState.xOffset - outputState.zeroXOffset;
+    var xx = x + outputState.xOffset - outputState.zeroXOffset - outputState.wcsXOffset;
     outputState.maxX = Math.max(outputState.maxX, xx);
     outputState.minX = Math.min(outputState.minX, xx);
     return xx;
 }
 
 function tY(y) {
-    var yy = -(y + outputState.yOffset + outputState.zeroYOffset);
+    var yy = -(y + outputState.yOffset + outputState.zeroYOffset - outputState.wcsYOffset);
     outputState.maxY = Math.max(outputState.maxY, yy);
     outputState.minY = Math.min(outputState.minY, yy);
     return yy;
@@ -139,7 +153,6 @@ function toolStroke() {
 }
 
 function echoStock() {
-    onComment("Stock");
     echoln(indent() + "<polyline points=\"0,0 "
         + tX(properties.width) + ",0 "
         + tX(properties.width) + "," + tY(properties.height)
@@ -155,6 +168,24 @@ function onOpen() {
     if (properties.generateStock) {
         echoStock();
     }
+}
+
+function getPatternInstance() {
+    var patternId = currentSection.getPatternId();
+    var sections = [];
+    var first = true;
+    for (var i = 0; i < getNumberOfSections(); ++i) {
+        var section = getSection(i);
+        if (section.getPatternId() == patternId) {
+            if (i < getCurrentSectionId()) {
+                first = false; // not the first pattern instance
+            }
+            if (i != getCurrentSectionId()) {
+                sections.push(section.getId());
+            }
+        }
+    }
+    return sections;
 }
 
 function onComment(text) {
@@ -181,47 +212,124 @@ function onSection() {
             return;
     }
 
-    var remaining = currentSection.workPlane;
-    if (!isSameDirection(remaining.forward, new Vector(0, 0, 1))) {
-        error(localize("Tool orientation is not supported."));
-        return;
-    }
-    setRotation(remaining);
+    handlePattern();
 
-    echo(indent() + "<path id=\"" + getParameter("operation-comment")
+    var id = "op_" + getParameter("operation-comment").replace(/[ \(\)]/, "_") +
+        "-" + getParameter("autodeskcam:operation-id") + "-" + getCurrentSectionId();
+    echo(indent() + "<path id=\"" + id
         + "\" fill=\"" + toolFill() + "\" stroke=\"" + toolStroke() + "\" stroke-width=\"" + properties.lineWidth + "\" d=\"");
     outputState.lastPos = getCurrentPosition();
+    // Always lift a pen at the beginning - there might be patterns starting at the same position
+    echo(" M" + xyzFormat.format(tX(getCurrentPosition().x)) + " " + xyzFormat.format(tY(getCurrentPosition().y)));
+}
+
+function cloneBb(b) {
+    return {
+        upper: {
+            x: b.upper.x,
+            y: b.upper.y,
+            z: b.upper.z
+        },
+        lower: {
+            x: b.lower.x,
+            y: b.lower.y,
+            z: b.upper.z
+        }
+    };
 }
 
 function onParameter(name, value) {
-    if (name == "operation-comment") {
-        onComment(value);
-    }
-
-    if (name == "job-description") {
-        if (outputState.openedGroup) {
-            outputState.indent--;
-            echoln(indent() + "</g>");
+    if (name.lastIndexOf("part-", 0) === 0) {
+        if (name == "part-lower-x") {
+            outputState.prevStock = cloneBb(outputState.stock);
         }
-        echoln(indent() + "<g id=\"" + value + "\">");
-        outputState.indent++;
-        outputState.openedGroup = true;
-        if (!hasParameter("stock")) {
+
+        var vals = name.split("-");
+        v = parseFloat(value);
+
+        var tmp = outputState.stock[vals[1]];
+        tmp[vals[2]] = v;
+        outputState.stock[vals[1]] = tmp;
+
+        if (name != "part-upper-z") {
             return;
         }
-        v = JSON.parse(getParameter("stock").replace(/\(/g, "[").replace(/\)/g, "]"));
-        outputState.xOffset += parseFloat(v[1][0]) - parseFloat(v[0][0]) + properties.spacing;
+
+        var stock = outputState.stock;
+        outputState.yOffset = stock.upper.y - stock.lower.y;
+        outputState.zeroXOffset = stock.lower.x;
+        outputState.zeroYOffset = stock.lower.y;
+
+        tX(stock.upper.x);
+        tX(stock.lower.x);
+        tY(stock.upper.y);
+        tY(stock.lower.y);
+
+        var w = stock.upper.x - stock.lower.x;
+        var h = stock.upper.y - stock.lower.y;
+    }
+}
+
+function openPart(name) {
+    if (outputState.openedGroup) {
+        outputState.indent--;
+        echoln(indent() + "</g>");
+    }
+    echoln(indent() + "<g id=\"" + name + "\">");
+    outputState.indent++;
+    outputState.openedGroup = true;
+    outputState.xOffset += outputState.prevStock.upper.x - outputState.prevStock.lower.x + properties.spacing;
+    outputState.prevStock = cloneBb(outputState.stock);
+}
+
+function handlePattern() {
+    var jD = getParameter("job-description");
+    if (jD != outputState.openJob) {
+        outputState.patternStart = null;
+        outputState.initialPosition = currentSection.getInitialPosition();
     }
 
-    if (name == "stock") {
-        v = JSON.parse(value.replace(/\(/g, "[").replace(/\)/g, "]"));
-        outputState.yOffset = parseFloat(v[1][1]) - parseFloat(v[0][1]);
-        outputState.zeroXOffset = parseFloat(v[0][0]);
-        outputState.zeroYOffset = parseFloat(v[0][1]);
-        for (var i = 0; i != 2; i++) {
-            // update bounding box
-            tX(parseFloat(v[i][0]));
-            tY(parseFloat(v[i][1]))
+    if (!currentSection.isPatterned()) {
+        if (jD == outputState.openJob) {
+            return;
+        }
+        openPart(jD.replace(/[ \(\)]/, "_"));
+        outputState.wcsXOffset = 0;
+        outputState.wcsYOffset = 0;
+        outputState.openJob = jD;
+        return;
+    }
+
+    var opId = getParameter("autodeskcam:operation-id");
+    if (outputState.patternStart == null) {
+        outputState.patternStart = opId;
+        outputState.patternCounter = 1;
+    }
+
+    if (outputState.patternStart == opId) {
+        openPart(jD.replace(/[ \(\)]/, "_") + "-" + outputState.patternCounter);
+        outputState.patternCounter++;
+
+        var init = currentSection.getInitialPosition();
+        outputState.wcsXOffset = init.x - outputState.initialPosition.x;
+        outputState.wcsYOffset = init.y - outputState.initialPosition.y;
+    }
+    outputState.openJob = jD;
+}
+
+function dumpObject(obj, prefix, depth) {
+    if (depth == 3) {
+        return;
+    }
+    for (var property in obj) {
+        if (property == "text") {
+            continue;
+        }
+        if (obj.hasOwnProperty(property)) {
+            onComment(prefix + property + ": " + obj[property])
+        }
+        if (typeof (obj[property]) == "object") {
+            dumpObject(obj[property], prefix + "\t", depth + 1);
         }
     }
 }
