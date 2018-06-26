@@ -29,8 +29,8 @@
 		var config = {
 			clipperScale: 10000000,
 			curveTolerance: 0.3,
-			spacing: 0.5,
-			rotations: 8,
+			spacing: 1,
+			rotations: 4,
 			populationSize: 10,
 			mutationRate: 10,
 			useHoles: true,
