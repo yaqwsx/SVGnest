@@ -29,7 +29,7 @@ vendor = "Robotika Brno";
 vendorUrl = "https://robotikabrno.cz";
 certificationLevel = 2;
 
-longDescription = "Post processor for Trotec laser in FabLab Brno";
+longDescription = "Post processor for Trotec laser in FabLab Brno. Based on Glowforge post processor.";
 
 extension = "svg";
 mimetype = "image/svg+xml";

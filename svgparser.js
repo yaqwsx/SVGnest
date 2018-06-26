@@ -411,7 +411,6 @@
 	}
 
 	SvgParser.prototype.filterOutline = function(element) {
-		alert(element.getAttribute("id"))
 		var color = this.conf.outlineColor;
 		element = element || this.svgRoot;
 		for(var i=0; i<element.children.length;i++){
@@ -420,10 +419,26 @@
 			}
 		}
 
+		var styleStr = element.getAttribute("style");
+		var style = [];
+		if (styleStr != null) {
+			var parts = styleStr.split(';');
+			parts.forEach(function(value) {
+				var x = value.split(":");
+				style[x[0]] = x[1];
+			});
+		}
+
 		var fillValue = element.getAttribute("fill");
+		if (fillValue == null) {
+			fillValue = style["fill"];
+		}
 		var hasFill = fillValue ? fillValue != "none" : false;
 
 		var strokeValue = element.getAttribute("stroke");
+		if (strokeValue == null) {
+			strokeValue = style["stroke"];
+		}
 		var isOutline = strokeValue
 			?	tinycolor.equals(tinycolor(strokeValue), this.conf.outlineColor) ||
 				tinycolor.equals(tinycolor(strokeValue), this.conf.stockColor)
