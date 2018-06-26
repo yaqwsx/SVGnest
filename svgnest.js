@@ -800,16 +800,16 @@
 							}
 							partgroup.appendChild(c);
 						}
-						// Append elements not used for nesting
-						var pElem = findComponent(clone[flattened[0].source].id, this.originalSvg).parentElement;
-						for (var k = 0; k < pElem.children.length; k++) {
-							var isMissing = findComponent(pElem.children[k].id, partgroup) == null;
-							if (isMissing) {
-								partgroup.appendChild(pElem.children[k].cloneNode(true));
-							}
-						}
-						partgroup.id = pElem.id;
 					}
+					// Append elements not used for nesting
+					var pElem = findComponent(clone[part.source].id, this.originalSvg).parentElement;
+					for (var k = 0; k < pElem.children.length; k++) {
+						var isMissing = findComponent(pElem.children[k].id, partgroup) == null;
+						if (isMissing) {
+							partgroup.appendChild(pElem.children[k].cloneNode(true));
+						}
+					}
+					partgroup.id = pElem.id;
 
 					newsvg.appendChild(partgroup);
 				}
